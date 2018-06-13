@@ -1,0 +1,114 @@
+{{> navbar this}}
+<div class="container">
+    <div class="col-lg-12">
+        <h1 align="center">{{Name}}'s Profile</h1>
+        <div style="float:left; width: 30%">
+            <h3 align="center"> Achievements </h3>
+            <table class="table table-striped">
+                <tbody>
+                {{#if Achievements }}
+                    {{#each Achievements}}
+                        <tr>
+                            <td align="center">{{Name}}</td>
+                            <td align="center">{{Description}}</td>
+                        </tr>
+                    {{/each}}
+                {{else}}
+                    <h5 align="center"> No achievements yet. </h5>
+                {{/if}}
+                </tbody>
+            </table>
+        </div>
+        <div style="float:right; width: 30%">
+            <h3 align="center">Stats</h3>
+            <table class="table table-striped">
+                <tr>
+                    {{#each Stats}}
+                        <th style="text-align:center">{{Name}}</th>
+                    {{/each}}
+                </tr>
+                <tr align="Center">
+                    {{#each Stats}}
+                        <td> {{Value}} </td>
+                    {{/each}}
+                </tr>
+            </table>
+        </div>
+        <div style="float:left; width: 100%">
+            <h3 align="center"> Completed Challenges </h3>
+            {{#if Challenges}}
+                <table class="table table-striped">
+                    <tr>
+                        <th style="text-align:center">Name</th>
+                        <th style="text-align:center">Description</th>
+                        <th style="text-align:center">Reward</th>
+                    </tr>
+                {{#each Challenges}}
+                    {{#if Completed}}
+                        <tr align="Center">
+                            <td>  {{Name}} </td>
+                            <td>  {{Description}}</td>
+                            <td>
+                                {{#each ResourceLoot}}
+                                    <text>1x</text>
+                                    <text></text>
+                                    <b>{{Name}}</b>
+                                {{/each}}
+                                {{#each CurrencyLoot}}
+                                    <text>{{Value}}x</text>
+                                    <text></text>
+                                    <b>{{Name}}</b>
+                                {{/each}}
+                            </td>
+                        </tr>
+                    {{/if}}
+                {{/each}}
+                </table>
+            {{else}}
+                <h5 align="center"> No completed challenges yet. </h5>
+            {{/if}}
+        </div>
+        <div style="float:right; width: 50%">
+            <div id="inventory">
+                <h3 align="center">Inventory</h3>
+                <table class="table table-striped">
+                    <tr>
+                        <th style="text-align:center">Name</th>
+                        <th style="text-align:center">Stats</th>
+                        <th style="text-align:center"></th>
+                    </tr>
+                    {{#each Inventory}}
+                        <tr align="Center">
+                            <td>  {{Name}} </td>
+                            <td>
+                                {{#each Modifiers}}
+                                    <text>+</text>
+                                    {{Value}}
+                                    <text></text>
+                                    {{Name}}
+                                {{/each}}
+                            </td>
+                            {{#if Equipped}}
+                                <td>
+                                    <form action="/pirates/UnequipResource" method="post">
+                                        <input type="hidden" name="resourceId" value="{{Id}}">
+                                        <input type="hidden" name="playerId" value="{{../Id}}">
+                                        <input type="submit" value="Unequip">
+                                    </form>
+                                </td>
+                            {{else}}
+                                <td>
+                                    <form action="/pirates/EquipResource" method="post">
+                                        <input type="hidden" name="resourceId" value="{{Id}}">
+                                        <input type="hidden" name="playerId" value="{{../Id}}">
+                                        <input type="submit" value="Equip">
+                                    </form>
+                                </td>
+                            {{/if}}
+                        </tr>
+                    {{/each}}
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

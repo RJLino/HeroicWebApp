@@ -1,0 +1,36 @@
+<div class="panel col-xs-2">
+	{{#if @user}}
+		<div align="center">
+			<h3><a href='/festival/users/{{@user.username}}/profile'>{{@user.username}}</a></h3>
+			<form action='/festival/logout' method='post'>
+				<input type='submit' value="Logout" class="form-control btn-primary"/>
+			</form>
+			<br>
+			<h4 align="left">Search user</h4>
+			<form action="/festival/searchuser">
+				<input type="text" name="searchUser" placeholder="Username">
+				<input class="btn btn-primary" title="Search user" type="submit" value="Submit"/>
+			</form>
+		</div>
+	{{else}}
+		{{#if @messages.error}}
+		<div class="alert alert-warning" role="alert">
+			{{@messages.error}}
+		</div>
+		{{/if}}
+		<form action="/festival/login" method="post">
+			<div class="form-group">
+				<label>Username:</label>
+				<input type="text" name="username" class="form-control"/>
+			</div>
+			<div class="form-group">
+				<label>Password:</label>
+				<input type="password" name="password" class="form-control"/>
+			</div>
+			<div class="form-group">
+				<input type="submit" value="Log In" class="form-control"/>
+			</div>
+		</form>
+		<a class="center-block btn btn-primary" href='/festival/signup'>Sign Up</a>
+	{{/if}}
+</div>

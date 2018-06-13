@@ -1,0 +1,78 @@
+{{> navbar Player}}
+<h2 align="center">{{Name}}</h2>
+<div class="col-lg-12">
+    <h4 align="center">
+        {{#each Player.Purse}}
+            <h4> {{Value}} {{Name}}</h4>
+        {{/each}}
+    </h4>
+    <div style="float:right; width: 70%">
+        <div id="challenges">
+            <h4 align="center">Challenges</h4>
+            <table class="table">
+                <tr>
+                    <th style="text-align:center">Name</th>
+                    <th style="text-align:center">Description</th>
+                    <th style="text-align:center">Reward</th>
+                </tr>
+                {{#each Challenges}}
+                    <tr align="Center">
+                        <td>  {{Name}} </td>
+                        <td>  {{Description}}</td>
+                        <td>
+                            {{#each ResourceLoot}}
+                                <text>1x</text>
+                                <text></text>
+                                <b>{{Name}}</b>
+                            {{/each}}
+                            {{#each CurrencyLoot}}
+                                <text>{{Value}}x</text>
+                                <text></text>
+                                <b>{{Name}}</b>
+                            {{/each}}
+                        </td>
+                        <td>
+                            {{#unless (lookup ../Player.Challenges @index)}}
+                                <form action="/pirates/CompleteChallenge" method="post">
+                                    <input type="hidden" name="challengeId" value="{{Id}}">
+                                    <input type="hidden" name="playerId" value="{{../Player.Id}}">
+                                    <input type="submit" value="Complete">
+                                </form>
+                            {{else}}
+                                {{#with (lookup ../Player.Challenges @index)}}
+                                    {{#if Completed}}
+                                        <form>
+                                            <input type="submit" value="Completed" disabled>
+                                        </form>
+                                    {{else}}
+                                        <form action="/pirates/CompleteChallenge" method="post">
+                                            <input type="hidden" name="challengeId" value="{{Id}}">
+                                            <input type="hidden" name="playerId" value="{{../../Player.Id}}">
+                                            <input type="submit" value="Complete">
+                                        </form>
+                                    {{/if}}
+                                {{/with}}
+                            {{/unless}}
+
+                        </td>
+                    </tr>
+                {{/each}}
+            </table>
+        </div>
+    </div>
+    <div style="float:left; width: 20%">
+        <h4 align="center">Stats</h4>
+        <table class="table">
+            <tr>
+                {{#each Player.Stats}}
+                    <th style="text-align:center">{{Name}}</th>
+                {{/each}}
+            </tr>
+            <tr align="Center">
+                {{#each Player.Stats}}
+                    <td> {{Value}} </td>
+                {{/each}}
+            </tr>
+        </table>
+    </div>
+</div>

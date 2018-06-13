@@ -1,0 +1,58 @@
+{{> navbar Resources.player}}
+<h2 align="center">Store</h2>
+
+<div style="width:900px; margin:0 auto;">
+    {{#each Resources.player.Purse}}
+        <p> {{Value}} {{Name}}</p>
+    {{/each}}
+
+
+    <table class="table">
+        <tr>
+            <th style="text-align:center">Name</th>
+            <th style="text-align:center">Stats</th>
+            <th style="text-align:center">Cost</th>
+            <th></th>
+        </tr>
+
+        {{#each Resources}}
+            <tr align="Center">
+                <td>  {{Name}} </td>
+                <td>
+                    {{#each Modifiers}}
+                        <text>+</text>
+                        {{Value}}
+                        <text></text>
+                        <b>{{Name}}</b>
+                    {{/each}}
+                </td>
+                <td>
+                    {{#each Prices}}
+                        <text></text>
+                        {{Value}}
+                        <text></text>
+                        <b>{{Name}}</b>
+                    {{/each}}
+                </td>
+                <td>
+                    {{#each Prices}}
+                        {{#greaterThan ../Prices.length 1}}
+                            <div  style="float:left;">
+                        {{else}}
+                            <div  style="float:none;">
+                        {{/greaterThan}}
+                                <form action="store/PurchaseResource" method="post">
+                                    <input type="hidden" name="resourceId" value="{{../Id}}">
+                                    <input type="hidden" name="playerId" value="{{../../Resources.player.Id}}">
+                                    <input type="hidden" name="currencyId" value="{{Id}}">
+                                    <input type="submit" value="Purchase with {{Name}}">
+                                </form>
+                            </div>
+                    {{/each}}
+
+                </td>
+            </tr>
+
+        {{/each}}
+    </table>
+</div>
