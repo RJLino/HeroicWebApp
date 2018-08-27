@@ -4,13 +4,13 @@
  * Constructor Resource
  */
 class Resource {
-    constructor(Id, Name, Description, Prices, Modifiers, Equipped) {
-        this.Id = Id;
-        this.Name = Name;
-        this.Description = Description;
-        this.Prices = Prices;
-        this.Modifiers = Modifiers;
-        this.Equipped = Equipped;
+    constructor(id, name, description, prices, modifiers, equipped) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.prices = prices;
+        this.modifiers = modifiers;
+        this.equipped = equipped;
     }
 }
 

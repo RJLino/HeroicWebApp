@@ -4,14 +4,14 @@
  * Constructor Player
  */
 class Player {
-    constructor(Id, Name, Purse, Inventory, Stats, Achievements, Challenges) {
-        this.Id = Id;
-        this.Name = Name;
-        this.Purse = Purse;
-        this.Inventory = Inventory;
-        this.Stats = Stats;
-        this.Achievements = Achievements;
-        this.Challenges = Challenges;
+    constructor(userId, avatarName, purse, inventory, stats, achievements, challenges) {
+        this.userId = userId;
+        this.avatarName = avatarName;
+        this.purse = purse;
+        this.inventory = inventory;
+        this.stats = stats;
+        this.achievements = achievements;
+        this.challenges = challenges;
     }
 }
 

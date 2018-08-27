@@ -2,8 +2,8 @@
 <h2 align="center">Store</h2>
 
 <div style="width:900px; margin:0 auto;">
-    {{#each Resources.player.Purse}}
-        <p> {{Value}} {{Name}}</p>
+    {{#each Resources.player.purse}}
+        <p> {{value}} {{designation}}</p>
     {{/each}}
 
 
@@ -17,35 +17,35 @@
 
         {{#each Resources}}
             <tr align="Center">
-                <td>  {{Name}} </td>
+                <td>  {{name}} </td>
                 <td>
-                    {{#each Modifiers}}
+                    {{#each modifiers}}
                         <text>+</text>
-                        {{Value}}
+                        {{value}}
                         <text></text>
-                        <b>{{Name}}</b>
+                        <b>{{designation}}</b>
                     {{/each}}
                 </td>
                 <td>
-                    {{#each Prices}}
+                    {{#each prices}}
                         <text></text>
-                        {{Value}}
+                        {{value}}
                         <text></text>
-                        <b>{{Name}}</b>
+                        <b>{{designation}}</b>
                     {{/each}}
                 </td>
                 <td>
-                    {{#each Prices}}
-                        {{#greaterThan ../Prices.length 1}}
+                    {{#each prices}}
+                        {{#greaterThan ../prices.length 1}}
                             <div  style="float:left;">
                         {{else}}
                             <div  style="float:none;">
                         {{/greaterThan}}
                                 <form action="store/PurchaseResource" method="post">
-                                    <input type="hidden" name="resourceId" value="{{../Id}}">
-                                    <input type="hidden" name="playerId" value="{{../../Resources.player.Id}}">
-                                    <input type="hidden" name="currencyId" value="{{Id}}">
-                                    <input type="submit" value="Purchase with {{Name}}">
+                                    <input type="hidden" name="resourceId" value="{{../id}}">
+                                    <input type="hidden" name="playerId" value="{{../../Resources.player.userId}}">
+                                    <input type="hidden" name="currencyId" value="{{id}}">
+                                    <input type="submit" value="Purchase with {{designation}}">
                                 </form>
                             </div>
                     {{/each}}

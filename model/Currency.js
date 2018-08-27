@@ -4,10 +4,10 @@
  * Constructor Currency
  */
 class Currency {
-    constructor(Id, Name, Value) {
-        this.Id = Id;
-        this.Name = Name;
-        this.Value = Value;
+    constructor(id, designation, value) {
+        this.id = id;
+        this.designation = designation;
+        this.value = value;
     }
 }
 

@@ -1,82 +1,97 @@
 
 const http = require('http');
+const request = require('request');
 const Game = require('./model/Game.js');
 const Achievement = require('./model/Achievement.js');
 const Challenge = require('./model/Challenge.js');
+const GroupChallenge = require('./model/GroupChallenge.js');
 const Resource = require('./model/Resource.js');
 const Attribute = require('./model/Attribute.js');
 const Currency = require('./model/Currency.js');
 const Player = require('./model/Player.js');
 
-const heroicuri = 'http://localhost:52903/api/game/';
+const GroupRequirement_Achievement = require('./model/GroupRequirement_Achievement.js');
+const GroupRequirement_Attribute = require('./model/GroupRequirement_Attribute.js');
+const GroupRequirement_Challenge = require('./model/GroupRequirement_Challenge.js');
+
+const heroicuri = 'http://localhost:53144/';
 
 module.exports = {
     'getGame': getGame,
     'getPlayer' : getPlayer,
     'getBasicPlayer' : getBasicPlayer,
     'getResources' : getResources,
+    'contributeGroupChallenge' : contributeGroupChallenge,
     'completeChallenge' : completeChallenge,
     'equipResource' : equipResource,
     'unequipResource' : unequipResource,
     'purchaseResource' : purchaseResource
 };
 function getGame(gameId, cb){
-    httpGetter(heroicuri + gameId, (err, document) => {
+    httpGetter(heroicuri + "game/" + gameId, (err, document) => {
         if(err) return cb(err);
         const gameData = JSON.parse(document.toString());
+        let challenges; let achievements; let resources;
 
-        let challenges = gameData.Challenges.map(obj => new Challenge(obj.Id, obj.Name, obj.Description, obj.Group, obj.Repeatable));
-        gameData.Challenges.forEach(ch => {
-            let reqAchievements;
-            let reqAttributes ;
-            let reqChallenges;
+        achievements = gameData.achievements.map(obj => new Achievement(obj.id, obj.name, obj.description));
+
+        let chIndex = 0;
+        challenges = gameData.challenges.map(obj => new Challenge(obj.id, obj.name, obj.description, obj.repeatable, obj.completed));
+        gameData.challenges.forEach(ch => {
+            let requiredAchievements;
+            let requiredAttributes ;
+            let requiredChallenges;
+            let achievementLoot;
             let resourceLoot;
             let currencyLoot;
-            if(Array.isArray(ch.ReqAchievements) && ch.ReqAchievements.length){
-                reqAchievements = ch.ReqAchievements.map(obj => new Achievement(obj.Id, obj.Name, obj.Description));
-                challenges[ch.Id - 1].ReqAchievements = reqAchievements;
+            if(Array.isArray(ch.requiredAchievements) && ch.requiredAchievements.length){
+                requiredAchievements = ch.requiredAchievements.map(obj => new Achievement(obj.id, obj.name, obj.description));
+                challenges[chIndex].requiredAchievements = requiredAchievements;
             }
-            if(Array.isArray(ch.ReqAttributes) && ch.ReqAttributes.length){
-                reqAttributes = ch.ReqAttributes.map(obj => new Attribute(obj.m_Item1.Id, obj.m_Item1.Designation, obj.m_Item2));
-                challenges[ch.Id - 1].ReqAttributes = reqAttributes;
+            if(Array.isArray(ch.requiredAttributes) && ch.requiredAttributes.length){
+                requiredAttributes = ch.requiredAttributes.map(obj => new Attribute(obj.id, obj.designation, obj.value));
+                challenges[chIndex].requiredAttributes = requiredAttributes;
             }
-            if(Array.isArray(ch.ReqChallenges) && ch.ReqChallenges.length){
-                reqChallenges = ch.ReqChallenges.map(obj => new Challenge(obj.Id));
-                challenges[ch.Id - 1].ReqChallenges = reqChallenges;
+            if(Array.isArray(ch.requiredChallenges) && ch.requiredChallenges.length){
+                requiredChallenges = ch.requiredChallenges.map(obj => new Challenge(obj.id));
+                challenges[chIndex].requiredChallenges = requiredChallenges;
             }
 
-            if(Array.isArray(ch.Loot) && ch.Loot.length){
-                resourceLoot = ch.Loot.map(obj => new Resource(obj.Id, obj.Name, obj.Description,
-                    obj.Prices.map(obj => new Currency(obj.m_Item1.Id, obj.m_Item1.Designation, obj.m_Item2)),
-                    obj.Modifiers.map(obj => new Attribute(obj.m_Item1.Id, obj.m_Item1.Designation, obj.m_Item2))));
-                challenges[ch.Id - 1].ResourceLoot = resourceLoot;
+            if(Array.isArray(ch.achievementLoot) && ch.achievementLoot.length){
+                achievementLoot = ch.achievementLoot.map(obj => new Achievement(obj.id, obj.name, obj.description));
+                challenges[chIndex].achievementLoot = achievementLoot;
             }
-            if(Array.isArray(ch.Reward) && ch.Reward.length){
-                currencyLoot = ch.Reward.map(obj => new Currency(obj.m_Item1.Id, obj.m_Item1.Designation, obj.m_Item2));
-                challenges[ch.Id - 1].CurrencyLoot = currencyLoot;
+            if(Array.isArray(ch.resourceLoot) && ch.resourceLoot.length){
+                resourceLoot = ch.resourceLoot.map(obj => new Resource(obj.id, obj.name, obj.description,
+                    obj.prices.map(obj => new Currency(obj.id, obj.designation, obj.value)),
+                    obj.modifiers.map(obj => new Attribute(obj.id, obj.designation, obj.value))));
+                challenges[chIndex].resourceLoot = resourceLoot;
             }
-    });
+            if(Array.isArray(ch.currencyLoot) && ch.currencyLoot.length){
+                currencyLoot = ch.currencyLoot.map(obj => new Currency(obj.id, obj.designation, obj.value));
+                challenges[chIndex].currencyLoot = currencyLoot;
+            }
+            chIndex++;
+        });
 
-    let achievements = gameData.Achievements.map(obj => new Achievement(obj.Id, obj.Name, obj.Description));
-    let resources = [];
-    for( let key in gameData.Resources){
-        if(gameData.Resources.hasOwnProperty(key)) {
-            resources[gameData.Resources[key].Id] = new Resource(gameData.Resources[key].Id, gameData.Resources[key].Name, gameData.Resources[key].Description,
-                gameData.Resources[key].Prices.map(obj => new Currency(obj.m_Item1.Id, obj.m_Item1.Designation, obj.m_Item2)),
-                gameData.Resources[key].Modifiers.map(obj => new Attribute(obj.m_Item1.Id, obj.m_Item1.Designation, obj.m_Item2)));
+        if(Array.isArray(gameData.resources) && gameData.resources.length){
+            resources = gameData.resources.map(obj => new Resource(obj.id, obj.name, obj.description,
+                obj.prices.map(obj => new Currency(obj.id, obj.designation, obj.value)),
+                obj.modifiers.map(obj => new Attribute(obj.id, obj.designation, obj.value))));
         }
-    }
-    getPlayer(gameId, 1, (err, player)=> {
-        if(err) return cb(err);
-        let game = new Game(gameData.Id, gameData.Name, challenges, achievements, resources, player);
-        cb(null, game)
-    });
-
-
-})
+        getGroupChallenges(gameId, (err, groupChallenges) => {
+            if (err) return cb(err);
+            getPlayer(gameId, 1, (err, player)=> {
+                if(err) return cb(err);
+                let game = new Game(gameData.id, gameData.name, challenges, groupChallenges, achievements, resources, player);
+                cb(null, game)
+            });
+        });
+    })
 }
+
 function getPlayer(gameId, playerId, cb){
-    httpGetter(heroicuri + gameId + "/" + "player/" + playerId, (err, document) => {
+    httpGetter(heroicuri + "player/" + playerId + "/game/" + gameId, (err, document) => {
         if(err) return cb(err);
         const playerData = JSON.parse(document.toString());
         let purse;
@@ -85,164 +100,342 @@ function getPlayer(gameId, playerId, cb){
         let challenges;
         let achievements;
 
-        if(Array.isArray(playerData.Purse) && playerData.Purse.length){
-            purse = playerData.Purse.map(obj => new Currency(obj.m_Item1.Id, obj.m_Item1.Designation, obj.m_Item2));
+        if(Array.isArray(playerData.purse) && playerData.purse.length){
+            purse = playerData.purse.map(obj => new Currency(obj.id, obj.designation, obj.value));
         }
-        if(Array.isArray(playerData.Inventory) && playerData.Inventory.length){
-            inventory = playerData.Inventory.map(obj => new Resource(obj.Id, obj.Name, obj.Description,
-                obj.Prices.map(obj => new Currency(obj.m_Item1.Id, obj.m_Item1.Designation, obj.m_Item2)),
-                obj.Modifiers.map(obj => new Attribute(obj.m_Item1.Id, obj.m_Item1.Designation, obj.m_Item2)), obj.Equipped));
+        if(Array.isArray(playerData.inventory) && playerData.inventory.length){
+            inventory = playerData.inventory.map(obj => new Resource(obj.id, obj.name, obj.description,
+                obj.prices.map(obj => new Currency(obj.id, obj.designation, obj.value)),
+                obj.modifiers.map(obj => new Attribute(obj.id, obj.designation, obj.value)), obj.equipped));
         }
-        if(Array.isArray(playerData.Stats) && playerData.Stats.length){
-            stats = playerData.Stats.map(obj => new Attribute(obj.m_Item1.Id, obj.m_Item1.Designation, obj.m_Item2));
+        if(Array.isArray(playerData.stats) && playerData.stats.length){
+            stats = playerData.stats.map(obj => new Attribute(obj.id, obj.designation, obj.value));
+        }
+        if(Array.isArray(playerData.achievements) && playerData.achievements.length){
+            achievements = playerData.achievements.map(obj => new Achievement(obj.id, obj.name, obj.description));
         }
 
-        challenges = playerData.Challenges.map(obj => new Challenge(obj.Id, obj.Name, obj.Description, obj.Group, obj.Repeatable, obj.Completed));
-        playerData.Challenges.forEach(ch => {
-            let reqAchievements;
-            let reqAttributes ;
-            let reqChallenges;
+        let chIndex = 0;
+        challenges = playerData.challenges.map(obj => new Challenge(obj.id, obj.name, obj.description, obj.repeatable, obj.completed));
+        playerData.challenges.forEach(ch => {
+            let requiredAchievements;
+            let requiredAttributes ;
+            let requiredChallenges;
             let resourceLoot;
             let currencyLoot;
-            if(Array.isArray(ch.ReqAchievements) && ch.ReqAchievements.length){
-                reqAchievements = ch.ReqAchievements.map(obj => new Achievement(obj.Id, obj.Name, obj.Description));
-                challenges[ch.Id - 1].ReqAchievements = reqAchievements;
+            if(Array.isArray(ch.requiredAchievements) && ch.requiredAchievements.length){
+                requiredAchievements = ch.requiredAchievements.map(obj => new Achievement(obj.id, obj.name, obj.description));
+                challenges[chIndex].requiredAchievements = requiredAchievements;
             }
-            if(Array.isArray(ch.ReqAttributes) && ch.ReqAttributes.length){
-                reqAttributes = ch.ReqAttributes.map(obj => new Attribute(obj.m_Item1.Id, obj.m_Item1.Designation, obj.m_Item2));
-                challenges[ch.Id - 1].ReqAttributes = reqAttributes;
+            if(Array.isArray(ch.requiredAttributes) && ch.requiredAttributes.length){
+                requiredAttributes = ch.requiredAttributes.map(obj => new Attribute(obj.id, obj.designation, obj.value));
+                challenges[chIndex].requiredAttributes = requiredAttributes;
             }
-            if(Array.isArray(ch.ReqChallenges) && ch.ReqChallenges.length){
-                reqChallenges = ch.ReqChallenges.map(obj => new Challenge(obj.Id));
-                challenges[ch.Id - 1].ReqChallenges = reqChallenges;
+            if(Array.isArray(ch.requiredChallenges) && ch.requiredChallenges.length){
+                requiredChallenges = ch.requiredChallenges.map(obj => new Challenge(obj.id));
+                challenges[chIndex].requiredChallenges = requiredChallenges;
             }
 
-            if(Array.isArray(ch.Loot) && ch.Loot.length){
-                resourceLoot = ch.Loot.map(obj => new Resource(obj.Id, obj.Name, obj.Description,
-                    obj.Prices.map(obj => new Currency(obj.m_Item1.Id, obj.m_Item1.Designation, obj.m_Item2)),
-                    obj.Modifiers.map(obj => new Attribute(obj.m_Item1.Id, obj.m_Item1.Designation, obj.m_Item2))));
-                challenges[ch.Id - 1].ResourceLoot = resourceLoot;
+            if(Array.isArray(ch.resourceLoot) && ch.resourceLoot.length){
+                resourceLoot = ch.resourceLoot.map(obj => new Resource(obj.id, obj.name, obj.description,
+                    obj.prices.map(obj => new Currency(obj.id, obj.designation, obj.value)),
+                    obj.modifiers.map(obj => new Attribute(obj.id, obj.designation, obj.value))));
+                challenges[chIndex].resourceLoot = resourceLoot;
             }
-            if(Array.isArray(ch.Reward) && ch.Reward.length){
-                currencyLoot = ch.Reward.map(obj => new Currency(obj.m_Item1.Id, obj.m_Item1.Designation, obj.m_Item2));
-                challenges[ch.Id - 1].CurrencyLoot = currencyLoot;
+            if(Array.isArray(ch.currencyLoot) && ch.currencyLoot.length){
+                currencyLoot = ch.currencyLoot.map(obj => new Currency(obj.id, obj.designation, obj.value));
+                challenges[chIndex].currencyLoot = currencyLoot;
             }
+            chIndex++;
         });
 
-        if(Array.isArray(playerData.Achievements) && playerData.Achievements.length){
-            achievements = playerData.Achievements.map(obj => new Achievement(obj.Id, obj.Name, obj.Description));
-        }
-
-        let player = new Player(playerData.UserId, playerData.AvatarName, purse, inventory, stats, achievements, challenges);
+        let player = new Player(playerData.userId, playerData.avatarName, purse, inventory, stats, achievements, challenges);
         cb(null, player)
     });
 }
+
 function getBasicPlayer(gameId, playerId, cb) {
-    httpGetter(heroicuri + gameId + "/" + "player/" + playerId, (err, document) => {
+    httpGetter(heroicuri + "player/" + playerId + "/game/" + gameId, (err, document) => {
         if (err) return cb(err);
         const playerData = JSON.parse(document.toString());
         let purse;
-        if(Array.isArray(playerData.Purse) && playerData.Purse.length){
-            purse = playerData.Purse.map(obj => new Currency(obj.m_Item1.Id, obj.m_Item1.Designation, obj.m_Item2));
+        if(Array.isArray(playerData.purse) && playerData.purse.length){
+            purse = playerData.purse.map(obj => new Currency(obj.id, obj.designation, obj.value));
         }
 
-        let player = new Player(playerData.UserId, playerData.AvatarName, purse);
+        let player = new Player(playerData.userId, playerData.avatarName, purse);
         cb(null, player);
     });
 }
-function getResources(gameId, cb) {
-    httpGetter(heroicuri + gameId + "/resources", (err, document) => {
+
+function getChallenges(gameId, cb) {
+    httpGetter(heroicuri + "game/" + gameId + "/challenges", (err, document) => {
         if (err) return cb(err);
-        let resources = [];
+        const challengeData = JSON.parse(document.toString());
+
+        let chIndex = 0;
+        let challenges = challengeData.map(obj => new Challenge(obj.id, obj.name, obj.description, obj.repeatable));
+        challengeData.forEach(ch => {
+            let requiredAchievements;
+            let requiredAttributes ;
+            let requiredChallenges;
+            let achievementLoot;
+            let resourceLoot;
+            let currencyLoot;
+            if(Array.isArray(ch.requiredAchievements) && ch.requiredAchievements.length){
+                requiredAchievements = ch.requiredAchievements.map(obj => new Achievement(obj.id, obj.name, obj.description));
+                challenges[chIndex].requiredAchievements = requiredAchievements;
+            }
+            if(Array.isArray(ch.requiredAttributes) && ch.requiredAttributes.length){
+                requiredAttributes = ch.requiredAttributes.map(obj => new Attribute(obj.id, obj.designation, obj.value));
+                challenges[chIndex].requiredAttributes = requiredAttributes;
+            }
+            if(Array.isArray(ch.requiredChallenges) && ch.requiredChallenges.length){
+                requiredChallenges = ch.requiredChallenges.map(obj => new Challenge(obj.id));
+                challenges[chIndex].requiredChallenges = requiredChallenges;
+            }
+
+            if(Array.isArray(ch.achievementLoot) && ch.achievementLoot.length){
+                achievementLoot = ch.achievementLoot.map(obj => new Achievement(obj.id, obj.name, obj.description));
+                challenges[chIndex].achievementLoot = achievementLoot;
+            }
+            if(Array.isArray(ch.resourceLoot) && ch.resourceLoot.length){
+                resourceLoot = ch.resourceLoot.map(obj => new Resource(obj.id, obj.name, obj.description,
+                    obj.prices.map(obj => new Currency(obj.id, obj.designation, obj.value)),
+                    obj.modifiers.map(obj => new Attribute(obj.id, obj.designation, obj.value))));
+                challenges[chIndex].resourceLoot = resourceLoot;
+            }
+            if(Array.isArray(ch.currencyLoot) && ch.currencyLoot.length){
+                currencyLoot = ch.currencyLoot.map(obj => new Currency(obj.id, obj.designation, obj.value));
+                challenges[chIndex].currencyLoot = currencyLoot;
+            }
+            chIndex++;
+        });
+        cb(null,challenges)
+    });
+}
+
+function getGroupChallenges(gameId, cb) {
+    httpGetter(heroicuri + "game/" + gameId + "/groupchallenges", (err, document) => {
+        if (err) return cb(err);
+        const groupChallengeData = JSON.parse(document.toString());
+
+        let chIndex = 0;
+        let groupChallenges = groupChallengeData.map(obj => new GroupChallenge(obj.id, obj.name, obj.description, obj.repeatable, obj.completed));
+        groupChallengeData.forEach(ch => {
+            let requiredAchievements;
+            let requiredAttributes;
+            let requiredChallenges;
+            let achievementLoot;
+            let resourceLoot;
+            let currencyLoot;
+
+            if(Array.isArray(ch.requiredAchievements) && ch.requiredAchievements.length){
+                requiredAchievements = ch.requiredAchievements.map(obj => new GroupRequirement_Achievement(obj.id, obj.designation, obj.currentValue, obj.targetValue));
+                groupChallenges[chIndex].requiredAchievements = requiredAchievements;
+            }
+            if(Array.isArray(ch.requiredAttributes) && ch.requiredAttributes.length){
+                requiredAttributes = ch.requiredAttributes.map(obj => new GroupRequirement_Attribute(obj.id, obj.designation, obj.currentValue, obj.targetValue));
+                groupChallenges[chIndex].requiredAttributes = requiredAttributes;
+            }
+            if(Array.isArray(ch.requiredChallenges) && ch.requiredChallenges.length){
+                requiredChallenges = ch.requiredChallenges.map(obj => new GroupRequirement_Challenge(obj.id, obj.designation, obj.currentValue, obj.targetValue));
+                groupChallenges[chIndex].requiredChallenges = requiredChallenges;
+            }
+
+            if(Array.isArray(ch.achievementLoot) && ch.achievementLoot.length){
+                achievementLoot = ch.achievementLoot.map(obj => new Achievement(obj.id, obj.name, obj.description));
+                groupChallenges[chIndex].achievementLoot = achievementLoot;
+            }
+            if(Array.isArray(ch.resourceLoot) && ch.resourceLoot.length){
+                resourceLoot = ch.resourceLoot.map(obj => new Resource(obj.id, obj.name, obj.description,
+                    obj.prices.map(obj => new Currency(obj.id, obj.designation, obj.value)),
+                    obj.modifiers.map(obj => new Attribute(obj.id, obj.designation, obj.value))));
+                groupChallenges[chIndex].resourceLoot = resourceLoot;
+            }
+            if(Array.isArray(ch.currencyLoot) && ch.currencyLoot.length){
+                currencyLoot = ch.currencyLoot.map(obj => new Currency(obj.id, obj.designation, obj.value));
+                groupChallenges[chIndex].currencyLoot = currencyLoot;
+            }
+            chIndex++;
+        });
+        cb(null,groupChallenges)
+    });
+}
+
+function getResources(gameId, cb) {
+    httpGetter(heroicuri + "game/" + gameId + "/resources", (err, document) => {
+        if (err) return cb(err);
+        let resources;
         const resourceData = JSON.parse(document.toString());
 
-        for (let key in resourceData) {
-            if (resourceData.hasOwnProperty(key)) {
-                resources[resourceData[key].Id] = new Resource(resourceData[key].Id, resourceData[key].Name, resourceData[key].Description,
-                    resourceData[key].Prices.map(obj => new Currency(obj.m_Item1.Id, obj.m_Item1.Designation, obj.m_Item2)),
-                    resourceData[key].Modifiers.map(obj => new Attribute(obj.m_Item1.Id, obj.m_Item1.Designation, obj.m_Item2)));
-            }
+        if(Array.isArray(resourceData) && resourceData.length){
+            resources = resourceData.map(obj => new Resource(obj.id, obj.name, obj.description,
+                obj.prices.map(obj => new Currency(obj.id, obj.designation, obj.value)),
+                obj.modifiers.map(obj => new Attribute(obj.id, obj.designation, obj.value))));
         }
         cb(null, resources)
     });
 }
 
-function completeChallenge(gameId, playerId, challengeId, cb){
+function getAchievement(gameId, achievementId, cb) {
+    httpGetter(heroicuri + "game/" + gameId + "/achievement/" + achievementId, (err, document) => {
+        if (err) return cb(err);
+        let achievement;
+        const achievementData = JSON.parse(document.toString());
+
+        achievement = new Achievement(achievementData.id, achievementData.name, achievementData.description);
+        cb(null, achievement)
+    });
+}
+
+function getAttribute(gameId, attributeId, cb) {
+    httpGetter(heroicuri + "game/" + gameId + "/attribute/" + attributeId, (err, document) => {
+        if (err) return cb(err);
+        let attribute;
+        const attributeData = JSON.parse(document.toString());
+
+        attribute = new Attribute(attributeData.id, attributeData.designation);
+        cb(null, attribute)
+    });
+}
+
+function getChallenge(gameId, challengeId, cb) {
+    httpGetter(heroicuri + "game/" + gameId + "/challenge/" + challengeId, (err, document) => {
+        if (err) return cb(err);
+        let challenge;
+        let requiredAchievements;
+        let requiredAttributes ;
+        let requiredChallenges;
+        let achievementLoot;
+        let resourceLoot;
+        let currencyLoot;
+        const challengeData = JSON.parse(document.toString());
+
+        challenge = new Challenge(challengeData.id, challengeData.name, challengeData.description, challengeData.repeatable);
+
+        if(Array.isArray(challengeData.requiredAchievements) && challengeData.requiredAchievements.length){
+            requiredAchievements = challengeData.requiredAchievements.map(obj => new Achievement(obj.id, obj.name, obj.description));
+            challenge.requiredAchievements = requiredAchievements;
+        }
+        if(Array.isArray(challengeData.requiredAttributes) && challengeData.requiredAttributes.length){
+            requiredAttributes = challengeData.requiredAttributes.map(obj => new Attribute(obj.id, obj.designation, obj.value));
+            challenge.requiredAttributes = requiredAttributes;
+        }
+        if(Array.isArray(challengeData.requiredChallenges) && challengeData.requiredChallenges.length){
+            requiredChallenges = challengeData.requiredChallenges.map(obj => new Challenge(obj.id));
+            challenge.requiredChallenges = requiredChallenges;
+        }
+
+        if(Array.isArray(challengeData.achievementLoot) && challengeData.achievementLoot.length){
+            achievementLoot = challengeData.achievementLoot.map(obj => new Achievement(obj.id, obj.name, obj.description));
+            challenge.achievementLoot = achievementLoot;
+        }
+        if(Array.isArray(challengeData.resourceLoot) && challengeData.resourceLoot.length){
+            resourceLoot = challengeData.resourceLoot.map(obj => new Resource(obj.id, obj.name, obj.description,
+                obj.prices.map(obj => new Currency(obj.id, obj.designation, obj.value)),
+                obj.modifiers.map(obj => new Attribute(obj.id, obj.designation, obj.value))));
+            challenge.resourceLoot = resourceLoot;
+        }
+        if(Array.isArray(challengeData.currencyLoot) && challengeData.currencyLoot.length){
+            currencyLoot = challengeData.currencyLoot.map(obj => new Currency(obj.id, obj.designation, obj.value));
+            challenge.currencyLoot = currencyLoot;
+        }
+        cb(null, challenge)
+    });
+}
+
+function contributeGroupChallenge(gameId, playerId, groupChallengeId, cb){
     let body = JSON.stringify({
-                gameId : "gameId",
-                playerId : "playerId",
-                challengeId : "challengeId"
-                });
-    postData("/api/game/" + gameId + "/player/" + playerId + "/complete/challenge/" + challengeId, body, (response) =>{
-        if(response.statusCode != 202)
-            cb(response);
+        gameId : gameId,
+        playerId : playerId,
+        groupChallengeId : groupChallengeId
+    });
+    post("player/" + playerId + "/game/" + gameId + "/groupChallenge/" + groupChallengeId + "/contribute", body, (response, errMessage) =>{
+        if(errMessage)
+            cb(errMessage, response)
         else
             cb(null, response)
     });
 }
+
+function completeChallenge(gameId, playerId, challengeId, cb){
+    let body = JSON.stringify({
+                gameId : gameId,
+                playerId : playerId,
+                challengeId : challengeId
+                });
+    post("player/" + playerId + "/game/" + gameId + "/challenge/" + challengeId + "/complete", body, (response, errMessage) =>{
+        if(errMessage)
+            cb(errMessage, response)
+        else
+            cb(null, response)
+    });
+}
+
 function equipResource(gameId, playerId, resourceId, cb){
     let body = JSON.stringify({
-        gameId : "gameId",
-        playerId : "playerId",
-        resourceId : "resourceId"
+        gameId : gameId,
+        playerId : playerId,
+        resourceId : resourceId
     });
-    postData("/api/game/" + gameId + "/player/" + playerId + "/equip/resource/" + resourceId, body, (response) =>{
-        if(response.statusCode != 202)
-            cb(response);
+    post("player/" + playerId + "/game/" + gameId + "/equip/resource/" + resourceId, body, (response, errMessage) =>{
+        if(errMessage)
+            cb(errMessage, response)
         else
             cb(null, response)
     });
     }
+
 function unequipResource(gameId, playerId, resourceId, cb){
     let body = JSON.stringify({
-        gameId : "gameId",
-        playerId : "playerId",
-        resourceId : "resourceId"
+        gameId : gameId,
+        playerId : playerId,
+        resourceId : resourceId
     });
-    postData("/api/game/" + gameId + "/player/" + playerId + "/unequip/resource/" + resourceId, body, (response) =>{
-        if(response.statusCode != 202)
-            cb(response);
+    post("player/" + playerId + "/game/" + gameId + "/unequip/resource/" + resourceId, body, (response, errMessage) =>{
+        if(errMessage)
+            cb(errMessage, response)
         else
             cb(null, response)
     });
 }
+
 function purchaseResource(gameId, playerId, resourceId, currencyId, cb){
     let body = JSON.stringify({
-        gameId : "gameId",
-        playerId : "playerId",
-        resourceId : "resourceId",
-        currencyId: "currencyId"
+        gameId : gameId,
+        playerId : playerId,
+        resourceId : resourceId,
+        currencyId: currencyId
     });
-    postData("/api/game/" + gameId + "/player/" + playerId + "/purchase/resource/" + resourceId + "/currency/" + currencyId , body, (response) =>{
-        if(response.statusCode != 202)
-            cb(response);
+    post("player/" + playerId + "/game/" + gameId + "/purchase/" + currencyId + "/resource/" + resourceId , body, (response, errMessage) =>{
+        if(errMessage)
+            cb(errMessage, response)
         else
             cb(null, response)
     });
 }
 
-
-function postData(path, body, cb){
-    let request = new http.ClientRequest({
-        hostname: "localhost",
-        port: 52903,
-        path: path,
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "Content-Length": Buffer.byteLength(body)
+function post(path, body, cb){
+    request.post(
+        heroicuri + path,
+        { json: { key: 'value' } },
+        function (error, response, body) {
+            if (!error && response.statusCode == 200) {
+                console.log(body)
+                cb(response)
+            }
+            else
+                cb(response, body)
         }
-    }, (response) => {
-        cb(response)
-    });
-    request.end(body)
+    );
 }
 
-    function httpGetter(path, cb){
-    http.get(path, (resp) => {
-        let res = '';
-        resp.on('error', cb);
-        resp.on('data', chunk => res += chunk.toString());
-        resp.on('end', () => cb(null, res))
-    })
+function httpGetter(path, cb){
+http.get(path, (resp) => {
+    let res = '';
+    resp.on('error', cb);
+    resp.on('data', chunk => res += chunk.toString());
+    resp.on('end', () => cb(null, res))
+})
 }

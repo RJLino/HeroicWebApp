@@ -7,7 +7,6 @@ const hbs = require('hbs');
 const passport = require('passport');
 const session = require('express-session')
 const flash = require('express-flash')
-
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var piratesRouter = require('./routes/game');
@@ -49,7 +48,6 @@ passport.serializeUser((user, cb) => {
 passport.deserializeUser((username, cb) => {
     usersService.find(username, cb)
 });
-
 
 app.use(logger('dev'));
 app.use(express.json());

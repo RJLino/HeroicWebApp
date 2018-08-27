@@ -4,13 +4,14 @@
  * Constructor Game
  */
 class Game {
-    constructor(Id, Name, Challenges, Achievements, Resources, Player) {
-        this.Id = Id;
-        this.Name = Name;
-        this.Challenges = Challenges;
-        this.Achievements = Achievements;
-        this.Resources = Resources;
-        this.Player = Player;
+    constructor(id, name, challenges, groupChallenges, achievements, resources, player) {
+        this.id = id;
+        this.name = name;
+        this.challenges = challenges;
+        this.groupChallenges = groupChallenges;
+        this.achievements = achievements;
+        this.resources = resources;
+        this.player = player;
     }
 }
 

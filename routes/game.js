@@ -1,10 +1,10 @@
 let express = require('express');
 let router = express.Router();
 const gameService = require('./../gameService.js');
-const gameId = "edd8602d-bf62-4fd4-8b98-fa8c797488df";
+const gameId = "a225ea55-3e78-47a3-8cbd-b45236a69578";
 const Error = require('./../model/Error.js');
 
-/* GET vikings game. */
+/* GET pirates game. */
 router.get('/', function(req, res, next) {
     gameService.getGame(gameId,(err, game) => {
         res.render('game', game)
@@ -26,10 +26,20 @@ router.get('/profile/:playerId', function(req, res, next) {
     })
 });
 
+router.post('/ContributeGroupChallenge', function(req, res, next) {
+    gameService.contributeGroupChallenge(gameId, req.body.playerId, req.body.groupChallengeId, (errMessage, response) =>{
+        if(errMessage)
+            next(new Error(response.statusCode, response.body));
+        else{
+            res.redirect('back')
+        }
+    })
+});
+
 router.post('/CompleteChallenge', function(req, res, next) {
-    gameService.completeChallenge(gameId, req.body.playerId, req.body.challengeId, (err, data) =>{
-        if(err)
-            next(new Error(err.statusCode, err.statusMessage));
+    gameService.completeChallenge(gameId, req.body.playerId, req.body.challengeId, (errMessage, response) =>{
+        if(errMessage)
+            next(new Error(response.statusCode, response.body));
         else{
             res.redirect('back')
         }
@@ -37,9 +47,9 @@ router.post('/CompleteChallenge', function(req, res, next) {
 });
 
 router.post('/EquipResource', function(req, res, next) {
-    gameService.equipResource(gameId, req.body.playerId, req.body.resourceId, (err, data) =>{
-        if(err)
-            next(new Error(err.statusCode, err.statusMessage));
+    gameService.equipResource(gameId, req.body.playerId, req.body.resourceId, (errMessage, response) =>{
+        if(errMessage)
+            next(new Error(response.statusCode, response.body));
         else{
             res.redirect('back')
         }
@@ -47,9 +57,9 @@ router.post('/EquipResource', function(req, res, next) {
 });
 
 router.post('/UnequipResource', function(req, res, next) {
-    gameService.unequipResource(gameId, req.body.playerId, req.body.resourceId, (err, data) =>{
-        if(err)
-            next(new Error(err.statusCode, err.statusMessage));
+    gameService.unequipResource(gameId, req.body.playerId, req.body.resourceId, (errMessage, response) =>{
+        if(errMessage)
+            next(new Error(response.statusCode, response.body));
         else{
             res.redirect('back')
         }
@@ -57,9 +67,9 @@ router.post('/UnequipResource', function(req, res, next) {
 });
 
 router.post('/store/PurchaseResource', function(req, res, next) {
-    gameService.purchaseResource(gameId, req.body.playerId, req.body.resourceId, req.body.currencyId, (err, data) =>{
-        if(err)
-            next(new Error(err.statusCode, err.statusMessage));
+    gameService.purchaseResource(gameId, req.body.playerId, req.body.resourceId, req.body.currencyId, (errMessage, response) =>{
+        if(errMessage)
+            next(new Error(response.statusCode, response.body));
         else{
             res.redirect('back')
         }

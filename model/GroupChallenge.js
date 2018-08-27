@@ -1,10 +1,10 @@
 'use strict';
 
 /**
- * Constructor Challenge
+ * Constructor GroupChallenge
  */
-class Challenge {
-    constructor(id, name, description, repeatable, completed, requiredAchievements, requiredAttributes, requiredChallenges, resourceLoot, currencyLoot) {
+class GroupChallenge {
+    constructor(id, name, description, repeatable, completed, requiredAchievements, requiredAttributes, requiredChallenges, achievementLoot, resourceLoot, currencyLoot) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -13,9 +13,10 @@ class Challenge {
         this.requiredAchievements = requiredAchievements;
         this.requiredAttributes = requiredAttributes;
         this.requiredChallenges = requiredChallenges;
+        this.achievementLoot = achievementLoot;
         this.resourceLoot = resourceLoot;
         this.currencyLoot = currencyLoot;
     }
 }
 
-module.exports = Challenge;
+module.exports = GroupChallenge;

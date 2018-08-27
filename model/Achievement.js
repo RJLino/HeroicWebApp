@@ -4,10 +4,10 @@
  * Constructor Achievement
  */
 class Achievement {
-    constructor(Id, Name, Description) {
-        this.Id = Id;
-        this.Name = Name;
-        this.Description = Description;
+    constructor(id, name, description) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
     }
 }
 
